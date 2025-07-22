@@ -23,6 +23,7 @@ class Fighter():
     self.hit = False
     self.health = 100
     self.alive = True
+    current_level =3
 
 
   def load_images(self, sprite_sheet, animation_steps):

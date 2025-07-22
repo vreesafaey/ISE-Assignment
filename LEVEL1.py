@@ -1,7 +1,10 @@
 import pygame
 
 class Fighter():
+
+
   def __init__(self, player, x, y, flip, data, sprite_sheet, animation_steps, sound):
+    current_level =1
     self.player = player
     self.size = data[0]
     self.image_scale = data[1]
@@ -23,6 +26,8 @@ class Fighter():
     self.hit = False
     self.health = 100
     self.alive = True
+
+    
 
 
   def load_images(self, sprite_sheet, animation_steps):
