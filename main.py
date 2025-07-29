@@ -10,7 +10,7 @@ pygame.init()
 SCREEN_WIDTH = 1350
 SCREEN_HEIGHT = 650
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Brawler")
+pygame.display.set_caption("fantasy duel")
 
 # Framerate
 clock = pygame.time.Clock()
@@ -208,8 +208,8 @@ def draw_main_menu():
     draw_menu_bg()
     
     # Title with shadow effect
-    draw_centered_text("BRAWLER", title_font, BLACK, 102)  # Shadow
-    draw_centered_text("BRAWLER", title_font, RED, 100)    # Main text
+    draw_centered_text("FANTASY DUEL", title_font, BLACK, 102)  # Shadow
+    draw_centered_text("FANTASY DUEL", title_font, RED, 100)    # Main text
     
     draw_centered_text("Ultimate Fighting Championship", subtitle_font, BLACK, 182)  # Shadow
     draw_centered_text("Ultimate Fighting Championship", subtitle_font, WHITE, 180)  # Main text
@@ -278,7 +278,7 @@ def draw_menu_bg():
         screen.blit(overlay, (0, 0))
         
     except:
-        # Fallback options if background1.jpg fails to load
+        # Fallback options if background1.jpg is missing AGAIN
         try:
             # Try animated GIF background
             global menu_bg_frame_index, menu_bg_last_update
