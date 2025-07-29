@@ -20,15 +20,27 @@ FPS = 60
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+BLUE = (0, 100, 255)
+GREEN = (0, 255, 0)
+
+# Game states
+MAIN_MENU = 0
+PLAYING = 1
+EXIT_SCREEN = 2
 
 # Game variables
+game_state = MAIN_MENU
 intro_count = 3
 last_count_update = pygame.time.get_ticks()
 score = [0, 0]
 round_over = False
 ROUND_OVER_COOLDOWN = 2000
 current_level = 1
+selected_level = 1
 MAX_LEVEL = 3
+games_completed = 0
+MAX_GAMES = 3
 
 Samurai_Size = 128
 Samurai_Scale = 2.55
@@ -41,20 +53,26 @@ Magician_Offset = [55, 45]
 Magician_Data = [Magician_Size, Magician_Scale, Magician_Offset]
 
 # Sounds
-# pygame.mixer.music.load("assets/audio/music.mp3")
-# pygame.mixer.music.set_volume(0.5)
-# pygame.mixer.music.play(-1, 0.0, 5000)
-# sword_fx = pygame.mixer.Sound("assets/audio/sword.wav")
-# sword_fx.set_volume(0.00)
-# magic_fx = pygame.mixer.Sound("assets/audio/magic.wav")
-# magic_fx.set_volume(0.00)
+
+# Game music
+game_music = pygame.mixer.Sound("assets/audio/battle-fighting-warrior-drums-372078.mp3")
+game_music.set_volume(0.5)
+game_music.play(-1)
+
+try:
+    button_sound = pygame.mixer.Sound("assets/audio/button-305770.mp3")  # Add button click sound
+    button_sound.set_volume(0.5)
+except:
+    button_sound = None
+    print("Button sound file not found")
+
+
 
 Samurai_fx = pygame.mixer.Sound("assets/audio/Samurai_sound/sword-blade-slicing-flesh-352708.mp3")
 Samurai_fx.set_volume(0.1)
 
 Samurai_attack_sound1 = pygame.mixer.Sound("assets/audio/Samurai_sound/sword-blade-slicing-flesh-352708.mp3")
 Samurai_attack_sound1.set_volume(0.1)
-# Samurai_attack_sound2 = pygame.mixer.Sound("assets/audio/Samurai_sound?")
 
 bg_frames = []
 bg_frame_index = 0
@@ -139,23 +157,149 @@ def draw_text(text, font, text_col, x, y):
     img = font.render(text, True, text_col)
     screen.blit(img, (x, y))
 
+def draw_centered_text(text, font, text_col, y):
+    img = font.render(text, True, text_col)
+    text_rect = img.get_rect()
+    text_rect.centerx = SCREEN_WIDTH // 2
+    screen.blit(img, (text_rect.x, y))
+
 def draw_button(text, font, color, x, y, width, height):
     mouse_pos = pygame.mouse.get_pos()
     click = pygame.mouse.get_pressed()
     button_rect = pygame.Rect(x, y, width, height)
     
+    # Check if mouse just entered button area
+    global last_hovered_button
+    if not hasattr(draw_button, 'last_hovered_button'):
+        draw_button.last_hovered_button = None
+    
     # Highlight if mouse over
     if button_rect.collidepoint(mouse_pos):
+        # Play hover sound (only once per button)
+        if draw_button.last_hovered_button != button_rect and button_sound:
+            try:
+                hover_sound = pygame.mixer.Sound("assets/audio/button_hover.wav")  # Add hover sound
+                hover_sound.set_volume(0.2)
+                hover_sound.play()
+            except:
+                pass
+        draw_button.last_hovered_button = button_rect
+        
         pygame.draw.rect(screen, (100, 100, 100), button_rect)
         if click[0] == 1:
+            # Play click sound
+            if button_sound:
+                button_sound.play()
             return True
     else:
+        if draw_button.last_hovered_button == button_rect:
+            draw_button.last_hovered_button = None
         pygame.draw.rect(screen, (50, 50, 50), button_rect)
         
     # Draw border and text
     pygame.draw.rect(screen, color, button_rect, 2)
-    draw_text(text, font, color, x + 10, y + 10)
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect(center=button_rect.center)
+    screen.blit(text_surface, text_rect)
     return False
+
+def draw_main_menu():
+    # Draw menu background
+    draw_menu_bg()
+    
+    # Title with shadow effect
+    draw_centered_text("BRAWLER", title_font, BLACK, 102)  # Shadow
+    draw_centered_text("BRAWLER", title_font, RED, 100)    # Main text
+    
+    draw_centered_text("Ultimate Fighting Championship", subtitle_font, BLACK, 182)  # Shadow
+    draw_centered_text("Ultimate Fighting Championship", subtitle_font, WHITE, 180)  # Main text
+    
+    # Stage selection buttons
+    button_width = 200
+    button_height = 80
+    button_spacing = 50
+    start_x = SCREEN_WIDTH // 2 - (3 * button_width + 2 * button_spacing) // 2
+    
+    stage1_btn = draw_button("STAGE 1", menu_font, BLUE, start_x, 280, button_width, button_height)
+    stage2_btn = draw_button("STAGE 2", menu_font, GREEN, start_x + button_width + button_spacing, 280, button_width, button_height)
+    stage3_btn = draw_button("STAGE 3", menu_font, RED, start_x + 2 * (button_width + button_spacing), 280, button_width, button_height)
+    
+    # Exit button
+    exit_btn = draw_button("EXIT", menu_font, WHITE, SCREEN_WIDTH // 2 - 100, 400, 200, 50)
+    
+    return stage1_btn, stage2_btn, stage3_btn, exit_btn
+
+def draw_level_select():
+    # This function is no longer needed
+    pass
+
+def draw_exit_screen():
+    # Draw background
+    screen.fill(BLACK)
+    
+    # Congratulations message
+    draw_centered_text("CONGRATULATIONS!", title_font, YELLOW, 150)
+    draw_centered_text(f"You completed {games_completed} games!", subtitle_font, WHITE, 220)
+    
+    # Final scores
+    draw_centered_text(f"Player 1 Total Wins: {score[0]}", menu_font, RED, 300)
+    draw_centered_text(f"Player 2 Total Wins: {score[1]}", menu_font, RED, 340)
+    
+    # Determine overall winner
+    if score[0] > score[1]:
+        winner_text = "Player 1 is the Ultimate Champion!"
+        winner_color = RED
+    elif score[1] > score[0]:
+        winner_text = "Player 2 is the Ultimate Champion!"
+        winner_color = RED
+    else:
+        winner_text = "It's a tie! Both players are champions!"
+        winner_color = YELLOW
+    
+    draw_centered_text(winner_text, subtitle_font, winner_color, 400)
+    
+    # Return to menu button
+    return_menu = draw_button("RETURN TO MAIN MENU", menu_font, WHITE, SCREEN_WIDTH // 2 - 200, 480, 400, 60)
+    
+    return return_menu
+
+# Draw menu background
+def draw_menu_bg():
+    """Draw the main menu background using background1.jpg"""
+    try:
+        # Use the specified background1.jpg
+        scaled_bg = pygame.transform.scale(menu_bg_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        screen.blit(scaled_bg, (0, 0))
+        
+        # Optional: Add a semi-transparent overlay for better text readability
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(100)  # Adjust transparency (0-255)
+        overlay.fill((0, 0, 0))  # Black overlay
+        screen.blit(overlay, (0, 0))
+        
+    except:
+        # Fallback options if background1.jpg fails to load
+        try:
+            # Try animated GIF background
+            global menu_bg_frame_index, menu_bg_last_update
+            current_time = pygame.time.get_ticks()
+            if current_time - menu_bg_last_update > bg_animation_speed:
+                menu_bg_frame_index = (menu_bg_frame_index + 1) % len(menu_bg_frames)
+                menu_bg_last_update = current_time
+            screen.blit(menu_bg_frames[menu_bg_frame_index], (0, 0))
+        except:
+            # Final fallback: Gradient background
+            draw_gradient_background()
+
+def draw_gradient_background():
+    """Draw a gradient background as fallback"""
+    for y in range(SCREEN_HEIGHT):
+        # Create a gradient from dark blue to black
+        color_ratio = y / SCREEN_HEIGHT
+        r = int(20 * (1 - color_ratio))
+        g = int(30 * (1 - color_ratio))
+        b = int(80 * (1 - color_ratio))
+        pygame.draw.line(screen, (r, g, b), (0, y), (SCREEN_WIDTH, y))
 
 # Draw background based on level
 def draw_bg():
@@ -196,8 +340,6 @@ def draw_health_bar(health, x, y):
 
 # Create fighters
 def create_fighters():
-    # f1 = Fighter(1, 200, 310, False, WARRIOR_DATA, warrior_sheet, WARRIOR_ANIMATION_STEPS, sword_fx)
-    # f2 = Fighter(2, 700, 310, True, WIZARD_DATA, wizard_sheet, WIZARD_ANIMATION_STEPS, magic_fx)
     f1 = Fighter(1, 200, 310, False, Samurai_Data, Samurai_sheet, Samurai_Animation_Steps, Samurai_fx)
     f2 = Fighter(2, 1000, 310, True, Magician_Data, Magician_sheet, Magician_Animation_Steps, Samurai_fx)
     return f1, f2
@@ -206,12 +348,12 @@ def check_debuff_timer():
     global round_start_time, debuff_activated, debuff_warning_shown
     
     # Start timer when countdown finishes
-    if intro_count <= 0 and round_start_time is None and not round_over and not game_over:
+    if intro_count <= 0 and round_start_time is None and not round_over and game_state == PLAYING:
         round_start_time = pygame.time.get_ticks()
         print("Round timer started!")
     
     # Check if 10 seconds have passed
-    if round_start_time is not None and not round_over and not game_over:
+    if round_start_time is not None and not round_over and game_state == PLAYING:
         elapsed_time = pygame.time.get_ticks() - round_start_time
         
         # Show warning at 8 seconds
@@ -233,6 +375,15 @@ def reset_timer():
     debuff_activated = False
     debuff_warning_shown = False
     
+def reset_game():
+    """Reset all game variables for a new game"""
+    global intro_count, round_over, bg_frame_index, fighter_1, fighter_2
+    intro_count = 3
+    round_over = False
+    bg_frame_index = 0
+    reset_timer()
+    fighter_1, fighter_2 = create_fighters()
+
 def get_health_color(health, max_health):
     ratio = health / max_health
     if ratio > 0.6:
@@ -242,10 +393,30 @@ def get_health_color(health, max_health):
     else:
         return (255, 0, 0)    # Red
 
-# Background
+# Background images and variables
 bg_frames_level1 = load_gif_frames("assets/images/background/arenaOption4.gif")
 bg_image2 = pygame.image.load("assets/images/background/background2.jpg").convert_alpha()
 bg_image3 = pygame.image.load("assets/images/background/background3.jpg").convert_alpha()
+
+# Menu background - load background1.jpg
+menu_bg_frame_index = 0
+menu_bg_last_update = pygame.time.get_ticks()
+
+try:
+    # Load the specified menu background
+    menu_bg_image = pygame.image.load("assets/images/background/background1.jpg").convert_alpha()
+    menu_bg_frames = None
+    print("Menu background loaded successfully: background1.jpg")
+except:
+    try:
+        # Fallback: Try animated menu background
+        menu_bg_frames = load_gif_frames("assets/images/background/menu_background.gif", brightness_factor=0.6)
+        menu_bg_image = None
+    except:
+        # Final fallback: Use gradient (handled in draw_menu_bg function)
+        menu_bg_frames = None
+        menu_bg_image = None
+        print("No menu background found, using gradient fallback")
 
 # Spritesheets
 Samurai_sheet = pygame.image.load("assets/images/Samurai/Sprites/Samurai_Spritelist.png").convert_alpha()
@@ -259,150 +430,172 @@ Samurai_Animation_Steps = [6, 8, 8, 12, 6, 4, 3, 2, 2, 3]
 Magician_Animation_Steps = [8, 7, 8, 7, 9, 16, 11, 8, 2, 4]
 
 # Fonts 
+title_font = pygame.font.Font("assets/fonts/VTFRedzone-Classic.ttf", 80)
+subtitle_font = pygame.font.Font("assets/fonts/turok.ttf", 40)
+menu_font = pygame.font.Font("assets/fonts/turok.ttf", 30)
 count_font = pygame.font.Font("assets/fonts/VTFRedzone-Classic.ttf", 120)
 score_font = pygame.font.Font("assets/fonts/turok.ttf", 30)
 stage_font = pygame.font.Font("assets/fonts/turok.ttf", 60)
 timer_font = pygame.font.Font("assets/fonts/turok.ttf", 20)
 debuff_font = pygame.font.Font("assets/fonts/turok.ttf", 24)
 
-# create fighters
+# Initialize fighters
 fighter_1, fighter_2 = create_fighters()
+
+# Music management
+current_music = None
+
+def play_menu_music():
+    global current_music
+    if current_music != "menu":
+        try:
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load("assets/audio/menu_music.mp3")
+            pygame.mixer.music.play(-1)  # Loop indefinitely
+            current_music = "menu"
+        except:
+            pass
+
+def play_game_music():
+    global current_music
+    if current_music != "game":
+        try:
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load("assets/audio/game_music.mp3")
+            pygame.mixer.music.play(-1)  # Loop indefinitely
+            current_music = "game"
+        except:
+            pass
 
 # Game loop
 run = True
-game_over = False
-winner = None  # Track the winner after Level 3
-    
 
 while run:
     clock.tick(FPS)
 
-    draw_bg()
-
-    health_font = pygame.font.Font("assets/fonts/turok.ttf", 20)
-    p1_health_color = get_health_color(fighter_1.health, 150)
-    p2_health_color = get_health_color(fighter_2.health, 150)
-
-    # Show health and scores
-    draw_health_bar(fighter_1.health, 20, 20)
-    draw_health_bar(fighter_2.health, 820, 20)
-    draw_text("Round 1", stage_font, WHITE, 585, 8)
-    draw_text("P1: " + str(score[0]), score_font, RED, 20, 55)
-    draw_text("P2: " + str(score[1]), score_font, RED, 820, 55)
-    draw_text(f"HP: {fighter_1.health}/150", health_font, p1_health_color, 430, 52)
-    draw_text(f"HP: {fighter_2.health}/150", health_font, p2_health_color, 1230, 52)
-
-    # Check debuff timer
-    check_debuff_timer()
-    
-    # Show timer and debuff status
-    if round_start_time is not None and not round_over and not game_over:
-        elapsed_time = (pygame.time.get_ticks() - round_start_time) // 1000
-        time_remaining = max(0, 10 - elapsed_time)
+    if game_state == MAIN_MENU:
+        play_menu_music()  # Start menu music
+        stage1_btn, stage2_btn, stage3_btn, exit_btn = draw_main_menu()
         
-        if debuff_activated:
-            draw_text("DEBUFF ACTIVE!", debuff_font, RED, SCREEN_WIDTH // 2 - 70, 100)
-        elif debuff_warning_shown:
-            draw_text(f"DEBUFF IN: {time_remaining}", debuff_font, YELLOW, SCREEN_WIDTH // 2 - 70, 100)
-        
-        draw_text(f"Time: {elapsed_time}s", timer_font, WHITE, SCREEN_WIDTH // 2 - 35, 70)
-    # Countdown logic
-    if intro_count <= 0 and not game_over:
-        fighter_1.move(SCREEN_WIDTH, SCREEN_HEIGHT, screen, fighter_2, round_over)
-        fighter_2.move(SCREEN_WIDTH, SCREEN_HEIGHT, screen, fighter_1, round_over)
-        # draw_text("FIGHT", count_font, RED, SCREEN_WIDTH / 2 - 30, SCREEN_HEIGHT / 3 - 20)
-    elif not game_over:
-        draw_text(str(intro_count), count_font, RED, SCREEN_WIDTH / 2 - 30, SCREEN_HEIGHT / 3 + 20)
-        
-        if (pygame.time.get_ticks() - last_count_update) >= 1000:
-            intro_count -= 1
-            last_count_update = pygame.time.get_ticks()
-
-    # FIXED: Update fighters with proper screen width for projectiles
-    fighter_1.update(SCREEN_WIDTH)  # Pass screen width for projectile updates
-    fighter_2.update(SCREEN_WIDTH)  # Pass screen width for projectile updates
-    
-    # Check projectile collisions
-    fighter_1.check_projectile_collision(fighter_2)
-    fighter_2.check_projectile_collision(fighter_1)
-    
-    # Draw fighters (this will also draw their projectiles)
-    fighter_1.draw(screen)
-    fighter_2.draw(screen)
-
-    # Debug: Draw projectile info
-    if len(fighter_1.projectiles) > 0 or len(fighter_2.projectiles) > 0:
-        debug_y = 130
-        for i, proj in enumerate(fighter_1.projectiles):
-            if proj.active:
-                draw_text(f"P1 Bolt {i}: x={int(proj.x)}, dir={proj.direction}", 
-                         pygame.font.Font(None, 20), WHITE, 10, debug_y + i * 20)
-        
-        for i, proj in enumerate(fighter_2.projectiles):
-            if proj.active:
-                draw_text(f"P2 Bolt {i}: x={int(proj.x)}, dir={proj.direction}", 
-                         pygame.font.Font(None, 20), WHITE, 800, debug_y + i * 20)
-
-
-    # Check for round over
-    if not round_over and not game_over:
-        if not fighter_1.alive:
-            score[1] += 1
-            round_over = True
-            round_over_time = pygame.time.get_ticks()
-            reset_timer()  # Reset timer when round ends
-            if current_level == MAX_LEVEL:
-                winner = 2
-                game_over = True
-                game_over_time = pygame.time.get_ticks()
-        elif not fighter_2.alive:
-            score[0] += 1
-            round_over = True
-            round_over_time = pygame.time.get_ticks()
-            reset_timer()  # Reset timer when round ends
-            if current_level == MAX_LEVEL:
-                winner = 1
-                game_over = True
-                game_over_time = pygame.time.get_ticks()
-
-    # Handle game over and victory UI
-    elif game_over:
-        victory_text = f"PLAYER {winner} WINS!"
-        draw_text(victory_text, count_font, RED, SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT // 3)
-
-        play_again = draw_button("Play Again", score_font, RED, SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2, 200, 50)
-        exit_game = draw_button("Exit", score_font, RED, SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 + 80, 200, 50)
-
-        if play_again:
-            score = [0, 0]
+        if stage1_btn:
+            selected_level = 1
             current_level = 1
-            intro_count = 3
-            round_over = False
-            game_over = False
-            bg_frame_index = 0
-            reset_timer()  # Reset timer for new game
-            fighter_1, fighter_2 = create_fighters()
-
-        elif exit_game:
+            score = [0, 0]
+            games_completed = 0
+            game_state = PLAYING
+            play_game_music()  # Switch to game music
+            reset_game()
+        elif stage2_btn:
+            selected_level = 2
+            current_level = 2
+            score = [0, 0]
+            games_completed = 0
+            game_state = PLAYING
+            play_game_music()  # Switch to game music
+            reset_game()
+        elif stage3_btn:
+            selected_level = 3
+            current_level = 3
+            score = [0, 0]
+            games_completed = 0
+            game_state = PLAYING
+            play_game_music()  # Switch to game music
+            reset_game()
+        elif exit_btn:
             run = False
+    
+    elif game_state == PLAYING:
+        draw_bg()
 
-    # If round over but game not finished
-    elif round_over:
-        screen.blit(victory_img, (360, 150))
-        if pygame.time.get_ticks() - round_over_time > ROUND_OVER_COOLDOWN:
-            round_over = False
-            intro_count = 3
-            reset_timer()  # Reset timer for next round
+        health_font = pygame.font.Font("assets/fonts/turok.ttf", 20)
+        p1_health_color = get_health_color(fighter_1.health, 150)
+        p2_health_color = get_health_color(fighter_2.health, 150)
 
-            # LEVEL TRANSITION
-            current_level += 1
-            if current_level > MAX_LEVEL:
-                current_level = MAX_LEVEL
-                game_over = True
-                game_over_time = pygame.time.get_ticks()
-            else:
-                bg_frame_index = 0
-                fighter_1, fighter_2 = create_fighters()
+        # Show health and scores
+        draw_health_bar(fighter_1.health, 20, 20)
+        draw_health_bar(fighter_2.health, 820, 20)
+        draw_text(f"Level {current_level}", stage_font, WHITE, 585, 8)
+        draw_text("P1: " + str(score[0]), score_font, RED, 20, 55)
+        draw_text("P2: " + str(score[1]), score_font, RED, 820, 55)
+        draw_text(f"HP: {fighter_1.health}/150", health_font, p1_health_color, 430, 52)
+        draw_text(f"HP: {fighter_2.health}/150", health_font, p2_health_color, 1230, 52)
+        draw_text(f"Games: {games_completed}/{MAX_GAMES}", score_font, WHITE, SCREEN_WIDTH // 2 - 50, 90)
+
+        # Check debuff timer
+        check_debuff_timer()
+        
+        # Show timer and debuff status
+        if round_start_time is not None and not round_over and game_state == PLAYING:
+            elapsed_time = (pygame.time.get_ticks() - round_start_time) // 1000
+            time_remaining = max(0, 10 - elapsed_time)
+            
+            if debuff_activated:
+                draw_text("DEBUFF ACTIVE!", debuff_font, RED, SCREEN_WIDTH // 2 - 70, 100)
+            elif debuff_warning_shown:
+                draw_text(f"DEBUFF IN: {time_remaining}", debuff_font, YELLOW, SCREEN_WIDTH // 2 - 70, 100)
+            
+            draw_text(f"Time: {elapsed_time}s", timer_font, WHITE, SCREEN_WIDTH // 2 - 35, 70)
+
+        # Countdown logic
+        if intro_count <= 0:
+            fighter_1.move(SCREEN_WIDTH, SCREEN_HEIGHT, screen, fighter_2, round_over)
+            fighter_2.move(SCREEN_WIDTH, SCREEN_HEIGHT, screen, fighter_1, round_over)
+        else:
+            draw_text(str(intro_count), count_font, RED, SCREEN_WIDTH / 2 - 30, SCREEN_HEIGHT / 3 + 20)
+            
+            if (pygame.time.get_ticks() - last_count_update) >= 1000:
+                intro_count -= 1
+                last_count_update = pygame.time.get_ticks()
+
+        # Update fighters
+        fighter_1.update(SCREEN_WIDTH)
+        fighter_2.update(SCREEN_WIDTH)
+        
+        # Check projectile collisions
+        fighter_1.check_projectile_collision(fighter_2)
+        fighter_2.check_projectile_collision(fighter_1)
+        
+        # Draw fighters
+        fighter_1.draw(screen)
+        fighter_2.draw(screen)
+
+        # Check for round over
+        if not round_over:
+            if not fighter_1.alive:
+                score[1] += 1
+                round_over = True
+                round_over_time = pygame.time.get_ticks()
+                reset_timer()
+            elif not fighter_2.alive:
+                score[0] += 1
+                round_over = True
+                round_over_time = pygame.time.get_ticks()
+                reset_timer()
+
+        # Handle round over
+        if round_over:
+            screen.blit(victory_img, (360, 150))
+            if pygame.time.get_ticks() - round_over_time > ROUND_OVER_COOLDOWN:
+                games_completed += 1
+                
+                # Check if we've completed enough games
+                if games_completed >= MAX_GAMES:
+                    game_state = EXIT_SCREEN
+                else:
+                    # Reset for next game at same level
+                    current_level = selected_level  # Stay at selected level
+                    reset_game()
+    
+    elif game_state == EXIT_SCREEN:
+        play_menu_music()  # Switch back to menu music
+        return_menu = draw_exit_screen()
+        
+        if return_menu:
+            game_state = MAIN_MENU
+            score = [0, 0]
+            games_completed = 0
+            current_level = 1
+            selected_level = 1
 
     # Event handler
     for event in pygame.event.get():
