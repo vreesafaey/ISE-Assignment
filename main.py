@@ -53,9 +53,9 @@ Magician_Offset = [55, 45]
 Magician_Data = [Magician_Size, Magician_Scale, Magician_Offset]
 
 # Sounds
-game_music = pygame.mixer.Sound("assets/audio/battle-fighting-warrior-drums-372078.mp3")
-game_music.set_volume(0.5)
-game_music.play(-1)
+#game_music = pygame.mixer.Sound("assets/audio/main_menu.mp3")
+#game_music.set_volume(0.5)
+#game_music.play(-1)
 
 try:
     button_sound = pygame.mixer.Sound("assets/audio/button-305770.mp3")
@@ -337,7 +337,7 @@ def play_menu_music():
     if current_music != "menu":
         try:
             pygame.mixer.music.stop()
-            pygame.mixer.music.load("assets/audio/menu_music.mp3")
+            pygame.mixer.music.load("assets/audio/main_menu.mp3")
             pygame.mixer.music.play(-1)
             current_music = "menu"
         except:
@@ -348,7 +348,7 @@ def play_game_music():
     if current_music != "game":
         try:
             pygame.mixer.music.stop()
-            pygame.mixer.music.load("assets/audio/game_music.mp3")
+            pygame.mixer.music.load("assets/audio/game_sound.mp3")
             pygame.mixer.music.play(-1)
             current_music = "game"
         except:
