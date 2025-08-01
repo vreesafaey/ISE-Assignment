@@ -473,9 +473,34 @@ run = True
 while run:
     clock.tick(FPS)
 
+<<<<<<< HEAD
     if game_state == MAIN_MENU:
         play_menu_music()  # Start menu music
         stage1_btn, stage2_btn, stage3_btn, exit_btn = draw_main_menu()
+=======
+    draw_bg()
+
+    health_font = pygame.font.Font("assets/fonts/turok.ttf", 20)
+    p1_health_color = get_health_color(fighter_1.health, 150)
+    p2_health_color = get_health_color(fighter_2.health, 150)
+
+    # Show health and scores
+    draw_health_bar(fighter_1.health, 20, 20)
+    draw_health_bar(fighter_2.health, 820, 20)
+    draw_text("Round " + str(current_level), stage_font, WHITE, 585, 8)
+    draw_text("P1: " + str(score[0]), score_font, RED, 20, 55)
+    draw_text("P2: " + str(score[1]), score_font, RED, 820, 55)
+    draw_text(f"HP: {fighter_1.health}/150", health_font, p1_health_color, 430, 52)
+    draw_text(f"HP: {fighter_2.health}/150", health_font, p2_health_color, 1230, 52)
+
+    # Check debuff timer
+    check_debuff_timer()
+    
+    # Show timer and debuff status
+    if round_start_time is not None and not round_over and not game_over:
+        elapsed_time = (pygame.time.get_ticks() - round_start_time) // 1000
+        time_remaining = max(0, 10 - elapsed_time)
+>>>>>>> 3e9b14d1c4213218e4ab53a6597bc585df678a5c
         
         if stage1_btn:
             selected_level = 1
