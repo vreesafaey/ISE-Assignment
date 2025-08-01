@@ -473,11 +473,9 @@ run = True
 while run:
     clock.tick(FPS)
 
-<<<<<<< HEAD
     if game_state == MAIN_MENU:
         play_menu_music()  # Start menu music
         stage1_btn, stage2_btn, stage3_btn, exit_btn = draw_main_menu()
-=======
     draw_bg()
 
     health_font = pygame.font.Font("assets/fonts/turok.ttf", 20)
@@ -500,7 +498,6 @@ while run:
     if round_start_time is not None and not round_over and not game_over:
         elapsed_time = (pygame.time.get_ticks() - round_start_time) // 1000
         time_remaining = max(0, 10 - elapsed_time)
->>>>>>> 3e9b14d1c4213218e4ab53a6597bc585df678a5c
         
         if stage1_btn:
             selected_level = 1
