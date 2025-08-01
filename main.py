@@ -10,7 +10,7 @@ pygame.init()
 SCREEN_WIDTH = 1350
 SCREEN_HEIGHT = 650
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("fantasy duel")
+pygame.display.set_caption("Brawler")
 
 # Framerate
 clock = pygame.time.Clock()
@@ -208,8 +208,8 @@ def draw_main_menu():
     draw_menu_bg()
     
     # Title with shadow effect
-    draw_centered_text("FANTASY DUEL", title_font, BLACK, 102)  # Shadow
-    draw_centered_text("FANTASY DUEL", title_font, RED, 100)    # Main text
+    draw_centered_text("BRAWLER", title_font, BLACK, 102)  # Shadow
+    draw_centered_text("BRAWLER", title_font, RED, 100)    # Main text
     
     draw_centered_text("Ultimate Fighting Championship", subtitle_font, BLACK, 182)  # Shadow
     draw_centered_text("Ultimate Fighting Championship", subtitle_font, WHITE, 180)  # Main text
@@ -278,7 +278,7 @@ def draw_menu_bg():
         screen.blit(overlay, (0, 0))
         
     except:
-        # Fallback options if background1.jpg is missing AGAIN
+        # Fallback options if background1.jpg fails to load
         try:
             # Try animated GIF background
             global menu_bg_frame_index, menu_bg_last_update
@@ -476,28 +476,6 @@ while run:
     if game_state == MAIN_MENU:
         play_menu_music()  # Start menu music
         stage1_btn, stage2_btn, stage3_btn, exit_btn = draw_main_menu()
-    draw_bg()
-
-    health_font = pygame.font.Font("assets/fonts/turok.ttf", 20)
-    p1_health_color = get_health_color(fighter_1.health, 150)
-    p2_health_color = get_health_color(fighter_2.health, 150)
-
-    # Show health and scores
-    draw_health_bar(fighter_1.health, 20, 20)
-    draw_health_bar(fighter_2.health, 820, 20)
-    draw_text("Round 1", stage_font, WHITE, 585, 8)
-    draw_text("P1: " + str(score[0]), score_font, RED, 20, 55)
-    draw_text("P2: " + str(score[1]), score_font, RED, 820, 55)
-    draw_text(f"HP: {fighter_1.health}/150", health_font, p1_health_color, 430, 52)
-    draw_text(f"HP: {fighter_2.health}/150", health_font, p2_health_color, 1230, 52)
-
-    # Check debuff timer
-    check_debuff_timer()
-    
-    # Show timer and debuff status
-    if round_start_time is not None and not round_over and not game_over:
-        elapsed_time = (pygame.time.get_ticks() - round_start_time) // 1000
-        time_remaining = max(0, 10 - elapsed_time)
         
         if stage1_btn:
             selected_level = 1
