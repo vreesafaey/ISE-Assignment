@@ -141,8 +141,8 @@ def draw_button(text, font, color, x, y, width, height):
     if button_rect.collidepoint(mouse_pos):
         if draw_button.last_hovered_button != button_rect and button_sound:
             try:
-                hover_sound = pygame.mixer.Sound("assets/audio/button_hover.wav")
-                hover_sound.set_volume(0.2)
+                hover_sound = pygame.mixer.Sound("assets/audio/button_hover.mp3")
+                hover_sound.set_volume(0.5)
                 hover_sound.play()
             except:
                 pass
