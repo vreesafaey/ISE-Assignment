@@ -485,7 +485,7 @@ while run:
     # Show health and scores
     draw_health_bar(fighter_1.health, 20, 20)
     draw_health_bar(fighter_2.health, 820, 20)
-    draw_text("Round " + str(current_level), stage_font, WHITE, 585, 8)
+    draw_text("Round 1", stage_font, WHITE, 585, 8)
     draw_text("P1: " + str(score[0]), score_font, RED, 20, 55)
     draw_text("P2: " + str(score[1]), score_font, RED, 820, 55)
     draw_text(f"HP: {fighter_1.health}/150", health_font, p1_health_color, 430, 52)
