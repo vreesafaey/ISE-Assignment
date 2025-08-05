@@ -2,6 +2,7 @@ import pygame
 from pygame import mixer
 from LEVEL1 import Fighter as Fighter1  # Fighter for LEVEL1
 from LEVEL2 import Fighter as Fighter2  # Fighter for LEVEL2
+from ball import Ball
 from PIL import Image
 
 mixer.init()
@@ -354,6 +355,80 @@ def play_game_music():
         except:
             pass
 
+ball_velocity = 20
+balls = []
+last_ball_shot = 0
+ball_shoot_interval = 2000 # in ms
+target_fighter_index = 0
+
+particles = []
+
+def shoot_ball():
+    global target_fighter_index, last_ball_shot
+
+    if current_level == 2 and intro_count <= 0 and not round_over:
+        current_time = pygame.time.get_ticks()
+
+        if current_time - last_ball_shot >= ball_shoot_interval:
+            target_fighter = fighter_1 if target_fighter_index == 0 else fighter_2
+
+            # start from top center
+            ball_start_x = SCREEN_WIDTH // 2
+            ball_start_y = 0
+
+            # target the center of the selected fighter
+            target_x = target_fighter.rect.centerx
+            target_y = target_fighter.rect.centery
+
+            new_ball = Ball(ball_start_x, ball_start_y, target_x, target_y, ball_velocity, SCREEN_HEIGHT, SCREEN_WIDTH, particles)
+            balls.append(new_ball)
+
+            target_fighter_index = 1 - target_fighter_index
+            last_ball_shot = current_time
+
+def update_balls():
+    global balls
+
+    for ball in balls[:]:
+        ball.update()
+
+        if ball.check_collision(fighter_1):
+            fighter_1.health -= 10  # damage
+            if fighter_1.health <= 0:
+                fighter_1.health = 0
+                fighter_1.alive = False
+
+        elif ball.check_collision(fighter_2):
+            fighter_2.health -= 10  # damage
+            if fighter_2.health <= 0:
+                fighter_2.health = 0
+                fighter_2.alive = False
+
+        if not ball.active:
+            balls.remove(ball)
+
+def draw_balls():
+    for ball in balls:
+        ball.draw(screen)
+
+def reset_ball_system():
+    global balls, last_ball_shot, target_fighter_index, particles
+    balls = []
+    particles = []
+    last_ball_shot = 0
+    target_fighter_index = 0
+
+def update_particles():
+    global particles
+    for particle in particles[:]:
+        particle.update()
+        if particle.life <= 0:
+            particles.remove(particle)
+
+def draw_particles():
+    for particle in particles:
+        particle.draw(screen)
+
 # Game loop
 run = True
 while run:
@@ -409,12 +484,23 @@ while run:
             if (pygame.time.get_ticks() - last_count_update) >= 1000:
                 intro_count -= 1
                 last_count_update = pygame.time.get_ticks()
+
+        if current_level == 2:
+            shoot_ball()
+            update_balls()
+            update_particles()
+
         fighter_1.update()
         fighter_2.update()
         fighter_1.check_projectile_collision(fighter_2)
         fighter_2.check_projectile_collision(fighter_1)
         fighter_1.draw(screen)
         fighter_2.draw(screen)
+
+        if current_level == 2:
+            draw_balls()
+            draw_particles()
+
         if not round_over:
             if not fighter_1.alive:
                 score[1] += 1
