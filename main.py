@@ -393,7 +393,7 @@ while run:
         draw_text(f"HP: {fighter_2.health}/150", health_font, p2_health_color, 1230, 52)
         draw_text(f"Games: {games_completed}/{MAX_GAMES}", score_font, WHITE, SCREEN_WIDTH // 2 - 50, 90)
         check_debuff_timer()
-        if round_start_time is not None and not round_over and game_state == PLAYING:
+        if current_level == 2 and round_start_time is not None and not round_over and game_state == PLAYING:
             elapsed_time = (pygame.time.get_ticks() - round_start_time) // 1000
             time_remaining = max(0, 10 - elapsed_time)
             if debuff_activated:
