@@ -53,11 +53,6 @@ Magician_Scale = 3
 Magician_Offset = [55, 45]
 Magician_Data = [Magician_Size, Magician_Scale, Magician_Offset]
 
-# Sounds
-#game_music = pygame.mixer.Sound("assets/audio/main_menu.mp3")
-#game_music.set_volume(0.5)
-#game_music.play(-1)
-
 try:
     button_sound = pygame.mixer.Sound("assets/audio/button-305770.mp3")
     button_sound.set_volume(0.5)
@@ -66,9 +61,12 @@ except:
     print("Button sound file not found")
 
 Samurai_fx = pygame.mixer.Sound("assets/audio/Samurai_sound/sword-blade-slicing-flesh-352708.mp3")
-Samurai_fx.set_volume(0.1)
-Samurai_attack_sound1 = pygame.mixer.Sound("assets/audio/Samurai_sound/sword-blade-slicing-flesh-352708.mp3")
-Samurai_attack_sound1.set_volume(0.1)
+Samurai_fx.set_volume(0.5)
+# Samurai_attack_sound1 = pygame.mixer.Sound("assets/audio/Samurai_sound/sword-blade-slicing-flesh-352708.mp3")
+# Samurai_attack_sound1.set_volume(0.3)
+
+Maigician_fx = pygame.mixer.Sound("assets/audio/Magician_sound/magic-spell-6005.mp3")
+Maigician_fx.set_volume(0.5)
 
 bg_frames = []
 bg_frame_index = 0
@@ -233,8 +231,11 @@ def draw_bg():
             bg_last_update = current_time
         screen.blit(bg_frames_level1[bg_frame_index], (0, 0))
     elif current_level == 2:
-        scaled_bg = pygame.transform.scale(bg_image2, (SCREEN_WIDTH, SCREEN_HEIGHT))
-        screen.blit(scaled_bg, (0, 0))
+        current_time = pygame.time.get_ticks()
+        if current_time - bg_last_update > bg_animation_speed:
+            bg_frame_index = (bg_frame_index + 1) % len(bg_frames_level2)
+            bg_last_update = current_time
+        screen.blit(bg_frames_level2[bg_frame_index], (0, 0))
     else:
         screen.blit(bg_frames_level1[0], (0, 0))
 
@@ -247,10 +248,10 @@ def draw_health_bar(health, x, y):
 def create_fighters():
     if current_level == 1:
         f1 = Fighter1(1, 200, 310, False, Samurai_Data, Samurai_sheet, Samurai_Animation_Steps, Samurai_fx)
-        f2 = Fighter1(2, 1000, 310, True, Magician_Data, Magician_sheet, Magician_Animation_Steps, Samurai_fx)
+        f2 = Fighter1(2, 1000, 310, True, Magician_Data, Magician_sheet, Magician_Animation_Steps, Maigician_fx)
     else:  # current_level == 2
         f1 = Fighter2(1, 200, 310, False, Samurai_Data, Samurai_sheet, Samurai_Animation_Steps, Samurai_fx)
-        f2 = Fighter2(2, 1000, 310, True, Magician_Data, Magician_sheet, Magician_Animation_Steps, Samurai_fx)
+        f2 = Fighter2(2, 1000, 310, True, Magician_Data, Magician_sheet, Magician_Animation_Steps, Maigician_fx)
     return f1, f2
 
 def check_debuff_timer():
@@ -262,7 +263,7 @@ def check_debuff_timer():
         elapsed_time = pygame.time.get_ticks() - round_start_time
         if elapsed_time >= 8000 and not debuff_warning_shown:
             debuff_warning_shown = True
-            print("Warning: Debuff activating in 2 seconds!")
+            # print("Warning: Debuff activating in 2 seconds!")
         if elapsed_time >= debuff_threshold and not debuff_activated:
             debuff_activated = True
             fighter_1.activate_debuff()
@@ -294,6 +295,7 @@ def get_health_color(health, max_health):
 
 # Background images and variables
 bg_frames_level1 = load_gif_frames("assets/images/background/arenaOption4.gif")
+bg_frames_level2 = load_gif_frames("assets/images/background/arenaOption.gif")
 bg_image2 = pygame.image.load("assets/images/background/background2.jpg").convert_alpha()
 try:
     menu_bg_image = pygame.image.load("assets/images/background/background1.jpg").convert_alpha()
@@ -461,21 +463,21 @@ while run:
         p2_health_color = get_health_color(fighter_2.health, 150)
         draw_health_bar(fighter_1.health, 20, 20)
         draw_health_bar(fighter_2.health, 820, 20)
-        draw_text(f"Level {current_level}", stage_font, WHITE, 585, 8)
+        draw_text(f"Level {current_level}", stage_font, WHITE, 590, 8)
         draw_text("P1: " + str(score[0]), score_font, RED, 20, 55)
         draw_text("P2: " + str(score[1]), score_font, RED, 820, 55)
         draw_text(f"HP: {fighter_1.health}/150", health_font, p1_health_color, 430, 52)
         draw_text(f"HP: {fighter_2.health}/150", health_font, p2_health_color, 1230, 52)
-        draw_text(f"Games: {games_completed}/{MAX_GAMES}", score_font, WHITE, SCREEN_WIDTH // 2 - 50, 90)
+        draw_text(f"Games: {games_completed + 1}/{MAX_GAMES}", score_font, WHITE, 615, 90)
         check_debuff_timer()
         if current_level == 2 and round_start_time is not None and not round_over and game_state == PLAYING:
             elapsed_time = (pygame.time.get_ticks() - round_start_time) // 1000
             time_remaining = max(0, 10 - elapsed_time)
             if debuff_activated:
-                draw_text("DEBUFF ACTIVE!", debuff_font, RED, SCREEN_WIDTH // 2 - 70, 100)
+                draw_text("DEBUFF ACTIVE!", debuff_font, RED, SCREEN_WIDTH // 2 - 70, 150)
             elif debuff_warning_shown:
-                draw_text(f"DEBUFF IN: {time_remaining}", debuff_font, YELLOW, SCREEN_WIDTH // 2 - 70, 100)
-            draw_text(f"Time: {elapsed_time}s", timer_font, WHITE, SCREEN_WIDTH // 2 - 35, 70)
+                draw_text(f"DEBUFF IN: {time_remaining}", debuff_font, YELLOW, SCREEN_WIDTH // 2 - 55, 150)
+            draw_text(f"Time: {elapsed_time}s", timer_font, WHITE, SCREEN_WIDTH // 2 - 25, 70)
         if intro_count <= 0:
             fighter_1.move(SCREEN_WIDTH, SCREEN_HEIGHT, screen, fighter_2, round_over)
             fighter_2.move(SCREEN_WIDTH, SCREEN_HEIGHT, screen, fighter_1, round_over)
@@ -492,8 +494,6 @@ while run:
 
         fighter_1.update()
         fighter_2.update()
-        fighter_1.check_projectile_collision(fighter_2)
-        fighter_2.check_projectile_collision(fighter_1)
         fighter_1.draw(screen)
         fighter_2.draw(screen)
 
@@ -513,7 +513,7 @@ while run:
                 round_over_time = pygame.time.get_ticks()
                 reset_timer()
         if round_over:
-            screen.blit(victory_img, (360, 150))
+            screen.blit(victory_img, (SCREEN_WIDTH // 2 - 120, SCREEN_HEIGHT // 2))
             if pygame.time.get_ticks() - round_over_time > ROUND_OVER_COOLDOWN:
                 games_completed += 1
                 if games_completed >= MAX_GAMES:

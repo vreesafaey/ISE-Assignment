@@ -164,46 +164,9 @@ class Fighter():
             self.update_fighter1()
         else:
             self.update_fighter2()
-        
-        # Update all projectiles with correct screen width
-        self.update_projectiles(screen_width)
-
-  def update_projectiles(self, screen_width):
-      """Update all active projectiles"""
-      for projectile in self.projectiles[:]:  # Use slice to avoid modification during iteration
-          if projectile.active:
-              projectile.update(screen_width)
-          else:
-              self.projectiles.remove(projectile)
-
-  def check_projectile_collision(self, target):
-      """Check if any projectile hits the target"""
-      for projectile in self.projectiles[:]:
-          if projectile.active and projectile.rect.colliderect(target.rect):
-              # Hit the target
-              target.health -= projectile.damage
-              target.hit = True
-              # Remove the projectile
-              projectile.active = False
-              self.projectiles.remove(projectile)
-              print(f"Projectile hit! Target health: {target.health}")
-
-  def fire_magic_bolt(self):
-      """Fire a magic bolt projectile"""
-      if not self.bolt_fired:
-          # Calculate bolt starting position
-          bolt_x = self.rect.centerx + (50 if not self.flip else - 50)
-          bolt_y = self.rect.centery - 20
-          
-          # Create projectile moving in the direction the fighter is facing
-          direction = -1 if self.flip else 1
-          bolt = Projectile(bolt_x, bolt_y, direction, speed=20, damage=15)
-          self.projectiles.append(bolt)
-          self.bolt_fired = True
-          print(f"Magic bolt fired by player {self.player}!")
 
   def update_fighter1(self):
-    self.apply_debuff_damage()
+    # self.apply_debuff_damage()/
     """Animation update logic specific to Fighter 1"""
     #check what action the player is performing
     if self.health <= 0:
@@ -229,7 +192,7 @@ class Fighter():
     self._handle_animation_frame(animation_cooldown)
 
   def update_fighter2(self):
-    self.apply_debuff_damage()
+    # self.apply_debuff_damage()
     """Animation update logic specific to Fighter 2"""
     #check what action the player is performing
     if self.health <= 0:
